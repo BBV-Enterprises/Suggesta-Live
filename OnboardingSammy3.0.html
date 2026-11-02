@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suggesta | Sammy</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F5EFE6;--ink:#1A1A2E;--muted:#EBD9D6;--glass:rgba(255,255,255,.12);--line:rgba(245,239,230,.35)}
+
+/* ===== Animated background: paste this block (plus the body rule) into your login page too ===== */
+@property --g1{syntax:'<color>';inherits:false;initial-value:#9A4458}
+@property --g2{syntax:'<color>';inherits:false;initial-value:#6B5048}
+@property --base{syntax:'<color>';inherits:false;initial-value:#5C2A3B}
+@property --x1{syntax:'<percentage>';inherits:false;initial-value:78%}
+@property --y1{syntax:'<percentage>';inherits:false;initial-value:8%}
+@property --x2{syntax:'<percentage>';inherits:false;initial-value:4%}
+@property --y2{syntax:'<percentage>';inherits:false;initial-value:96%}
+/* Wine > violet > blue > teal > green > amber > coral > back to wine (about 80 seconds per loop) */
+@keyframes drift{
+  0%{--g1:#9A4458;--g2:#6B5048;--base:#5C2A3B;--x1:78%;--y1:8%;--x2:4%;--y2:96%}
+  14%{--g1:#7A4AA8;--g2:#4A5AA0;--base:#3E2A5C;--x1:30%;--y1:20%;--x2:85%;--y2:80%}
+  28%{--g1:#3F63B8;--g2:#6A4AA0;--base:#25305C;--x1:70%;--y1:55%;--x2:15%;--y2:30%}
+  42%{--g1:#2E8C8F;--g2:#3F63B8;--base:#1F4650;--x1:25%;--y1:75%;--x2:80%;--y2:15%}
+  57%{--g1:#4C9A5E;--g2:#2E8C8F;--base:#24442F;--x1:75%;--y1:25%;--x2:10%;--y2:85%}
+  71%{--g1:#9C6428;--g2:#4C9A5E;--base:#4A3A1E;--x1:35%;--y1:60%;--x2:90%;--y2:40%}
+  85%{--g1:#B8553A;--g2:#9C6428;--base:#4A2A24;--x1:80%;--y1:70%;--x2:20%;--y2:20%}
+  100%{--g1:#9A4458;--g2:#6B5048;--base:#5C2A3B;--x1:78%;--y1:8%;--x2:4%;--y2:96%}
+}
+body{
+  background:radial-gradient(circle at var(--x1) var(--y1),var(--g1) 0%,transparent 55%),
+             radial-gradient(circle at var(--x2) var(--y2),var(--g2) 0%,transparent 50%),
+             var(--base);
+  animation:drift 80s ease-in-out infinite;
+}
+/* ===== end background ===== */
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{color:var(--cream);font-family:'DM Sans',sans-serif}
+.app{max-width:460px;margin:0 auto;height:100dvh;padding:28px 24px 24px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;transition:opacity .5s ease}
+.app.out{opacity:0}
+.serif{font-family:Fraunces,serif;font-style:italic;font-weight:500}
+.sammy{display:flex;align-items:center;gap:10px;font-weight:500;font-size:15px}
+.mark{width:40px;height:40px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center}
+.sub{margin:0;color:var(--muted);font-size:16px;line-height:1.5}
+.hint{margin:0;color:var(--muted);font-size:13px;text-align:center}
+
+/* Full-page question */
+.qwrap{flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px}
+.q{margin:0;font-size:clamp(36px,10vw,50px);line-height:1.1}
+.w{display:inline-block;opacity:0;animation:wordin .8s ease forwards}
+form.input{display:flex;align-items:flex-end;gap:10px;background:var(--glass);border:1px solid var(--line);border-radius:28px;padding:8px 8px 8px 20px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden}
+textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--cream);font:inherit;font-size:18px;padding:10px 0}
+textarea::placeholder{color:#E0CFCB}
+.send{width:46px;height:46px;border-radius:50%;border:0;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+.progress{display:flex;gap:8px;justify-content:center}
+.progress i{width:6px;height:6px;border-radius:3px;background:var(--line)}
+.progress i.on{width:24px;background:var(--cream)}
+
+/* Loading */
+.think{text-align:center;align-items:center;gap:26px}
+.think .q{font-size:clamp(34px,9vw,44px)}
+#status{margin:0;color:var(--muted);font-size:16px;min-height:24px;transition:opacity .25s}
+.track{width:200px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.bar{height:100%;width:0;background:var(--cream);border-radius:2px;animation:fill 5.5s linear forwards}
+
+/* Picks */
+button.hero,button.alt{font:inherit;color:inherit;text-align:left;border:0;cursor:pointer;transition:background .2s}
+button.hero:hover,button.alt:hover{background:rgba(255,255,255,.2)}
+button:focus-visible,a.btn:focus-visible{outline:2px solid var(--cream);outline-offset:3px}
+.hero{width:100%;background:var(--glass);border-radius:20px;padding:14px;display:flex;gap:14px}
+.poster{border-radius:12px;color:var(--ink);display:flex;align-items:flex-end;padding:12px;font-family:Fraunces,serif;font-style:italic}
+.hero .poster{width:112px;height:168px;flex-shrink:0;font-size:22px;background:var(--cream)}
+.hero .info{display:flex;flex-direction:column;gap:6px}
+.tag{font-size:12px;font-weight:500;letter-spacing:.08em}
+.meta{color:var(--muted);font-size:13px}
+.alts{display:flex;gap:12px}
+.alt{flex:1;background:var(--glass);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.alt .poster{height:96px;font-size:20px}
+.refine{display:flex;gap:12px}
+.refine button{flex:1;height:48px;border-radius:24px;border:1px solid var(--line);background:transparent;color:var(--cream);font:inherit;font-size:15px;cursor:pointer}
+.rise{animation:rise .7s ease both}
+
+/* Detail page */
+.back{align-self:flex-start;background:transparent;border:0;color:var(--cream);font:inherit;font-size:15px;cursor:pointer;padding:6px 0}
+.poster.big{height:170px;font-size:30px;width:100%}
+.label{margin:0 0 8px;font-size:12px;font-weight:500;letter-spacing:.08em;color:var(--muted)}
+.detail p.body{margin:0;font-size:16px;line-height:1.55}
+.detail section{display:flex;flex-direction:column;align-items:flex-start}
+.btn{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 22px;border-radius:23px;background:var(--cream);color:var(--ink);font-size:15px;font-weight:500;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--cream);border:1px solid var(--line)}
+.video{width:100%;aspect-ratio:16/9;border:0;border-radius:14px}
+
+@keyframes wordin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fill{to{width:100%}}
+@media (prefers-reduced-motion:reduce){body{animation:none}.rise,.bar{animation:none}.w{animation:none;opacity:1}.bar{width:100%}}
+</style>
+</head>
+<body>
+<main class="app" id="app"></main>
+
+<script>
+/* ---------- Settings ---------- */
+const USER_NAME = "Alex"; // swap in the logged-in user's name
+
+/* ---------- Conversation script ---------- */
+const STEPS = ["mood", "genre", "who", "time", "extra"];
+const QUESTIONS = [
+  "What’s your mood right now?",
+  "Noted. Any genre pulling at you, or should I surprise you?",
+  "Good to know. Who’s watching with you tonight?",
+  "Got it. How much time do you have?",
+  "Last one. Is there a movie you loved recently, or anything you definitely don’t want tonight?"
+];
+const PLACEHOLDERS = [
+  "tired but wired, honestly",
+  "comedy, maybe? or surprise me",
+  "just me, or me and my partner",
+  "about 90 minutes, or a long one",
+  "loved Lady Bird, no scary stuff"
+];
+const LABELS = ["Your mood", "Your genre", "Who is watching", "Time available", "A movie you loved, or something to avoid"];
+
+/* ---------- Film catalog ----------
+   vibe = the one-line description on the pick cards
+   peek = spoiler-free premise on the detail page
+   Optional: add trailerKey:"YOUTUBE_VIDEO_ID" to any film to embed its trailer on the detail page.
+   When you connect TMDB, its /movie/{id}/videos endpoint returns these keys for you. */
+const FILMS = [
+  {t:"Paddington 2", y:2017, r:"1h 43m", tags:["cozy","nostalgic","light","comedy","family"], who:["family","partner","solo","friends"],
+   vibe:"A warm blanket of a movie that makes the whole world feel a little kinder.",
+   peek:"Paddington is settled with the Brown family in London and hunting for the perfect gift for his Aunt Lucy’s birthday. Then a rare pop-up book goes missing, and his search for it turns into a very bear-sized mess."},
+  {t:"Chef", y:2014, r:"1h 54m", tags:["cozy","comedy","light","warm"], who:["family","partner","solo","friends"],
+   vibe:"Sizzling, sunny, and the kind of feel-good that leaves you hungry and happy.",
+   peek:"A talented chef quits his restaurant job after a public meltdown and starts over with a food truck. A road trip with his son and best friend might be exactly what his career, and his family, needs."},
+  {t:"Little Women", y:2019, r:"2h 15m", tags:["nostalgic","cozy","drama","romance"], who:["partner","solo","family"],
+   vibe:"Cozy-by-the-fire nostalgia with a lump in your throat.",
+   peek:"Four sisters grow up in 19th-century New England, each chasing a different dream. Jo, the writer, looks back on their lives and tries to make sense of it all."},
+  {t:"The Princess Bride", y:1987, r:"1h 38m", tags:["nostalgic","comedy","light","fantasy","cozy"], who:["family","partner","friends"],
+   vibe:"Pure comfort-food adventure that has been charming people for decades.",
+   peek:"A grandfather reads his sick grandson a favorite storybook: a tale of a farmhand, a beautiful princess, and a whole lot of swordfights, pirates, and giants."},
+  {t:"Spirited Away", y:2001, r:"2h 5m", tags:["animated","fantasy","nostalgic","thoughtful"], who:["family","solo","partner"],
+   vibe:"A dreamy, strange wander through a fairy tale you’ll want to live in.",
+   peek:"On the way to her new home, ten-year-old Chihiro stumbles into a hidden world of spirits and a mysterious bathhouse. To get her parents back, she has to find her courage and work her way through it."},
+  {t:"The Grand Budapest Hotel", y:2014, r:"1h 39m", tags:["comedy","light","quirky"], who:["partner","friends","solo"],
+   vibe:"A pastel-pink, perfectly stitched caper that moves like a dollhouse on caffeine.",
+   peek:"A legendary hotel concierge and his loyal lobby boy get tangled up in the theft of a priceless painting and a battle over a family fortune."},
+  {t:"Knives Out", y:2019, r:"2h 10m", tags:["mystery","comedy","thriller","light"], who:["friends","partner","family","solo"],
+   vibe:"Cozy sweaters, sharp wit, and a mystery you’ll want to shout theories at.",
+   peek:"When a famous mystery novelist is found dead after his birthday party, a sharp-eyed detective investigates his eccentric family, and every one of them has something to hide."},
+  {t:"Past Lives", y:2023, r:"1h 46m", tags:["romance","wistful","nostalgic","drama"], who:["partner","solo"],
+   vibe:"Quiet, tender, and the kind of ache you almost enjoy.",
+   peek:"Two childhood friends who were separated when one family emigrated reconnect decades later in New York, and spend a few days wondering about the lives they might have had."},
+  {t:"Arrival", y:2016, r:"1h 56m", tags:["sci-fi","thoughtful","wistful","drama"], who:["solo","partner"],
+   vibe:"Slow, hushed, and mind-bending, perfect for a night you want to feel something big.",
+   peek:"Twelve mysterious spacecraft appear around the globe. A linguist is recruited to figure out how to talk to the visitors before the world’s nerves snap."},
+  {t:"Everything Everywhere All at Once", y:2022, r:"2h 19m", tags:["wired","comedy","sci-fi","action","emotional"], who:["friends","partner","solo"],
+   vibe:"Wild, silly, and shockingly emotional, like your brain and heart on a rollercoaster.",
+   peek:"An overwhelmed laundromat owner with a mountain of taxes to deal with gets pulled into a multiverse adventure where she may be the only one who can save everything."},
+  {t:"Mad Max: Fury Road", y:2015, r:"2h", tags:["action","wired","intense"], who:["friends","solo"],
+   vibe:"Two hours of full-throttle adrenaline with the volume turned all the way up.",
+   peek:"In a scorched desert wasteland, Max is dragged into a high-speed escape led by a fierce warrior named Furiosa, with a tyrant warlord and his army right behind them."},
+  {t:"Whiplash", y:2014, r:"1h 47m", tags:["intense","tense","drama"], who:["solo","friends"],
+   vibe:"A sweaty, nerve-shredding sprint you can’t look away from.",
+   peek:"An ambitious young jazz drummer enrolls at an elite music conservatory, where a ruthless instructor pushes him harder than he ever imagined."},
+  {t:"Get Out", y:2017, r:"1h 44m", tags:["scary","thriller","tense","mystery"], who:["friends","partner"],
+   vibe:"Slow-burn dread with a razor-sharp edge that keeps you on your toes.",
+   peek:"A young photographer agrees to meet his girlfriend’s parents at their family estate for a weekend. The warm welcome is great, but little things start to feel off."},
+  {t:"Lady Bird", y:2017, r:"1h 35m", tags:["nostalgic","comedy","drama","cozy"], who:["solo","partner","friends"],
+   vibe:"Sun-faded, funny, and full of that bittersweet coming-of-age ache.",
+   peek:"A strong-willed high school senior in Sacramento dreams of escaping to college on the East Coast, while butting heads with her equally stubborn mother."},
+  {t:"Soul", y:2020, r:"1h 40m", tags:["animated","thoughtful","comedy","family"], who:["family","solo","partner"],
+   vibe:"Warm, jazzy, and gently existential, a hug with something to say.",
+   peek:"A middle school music teacher finally lands the gig of his dreams, then a bizarre accident sends him on a strange journey to figure out what makes a life worth living."},
+  {t:"Hunt for the Wilderpeople", y:2016, r:"1h 41m", tags:["comedy","light","adventure","family"], who:["family","friends","solo","partner"],
+   vibe:"A scrappy, laugh-out-loud adventure with surprising heart.",
+   peek:"A rebellious city kid and his grumpy foster uncle end up on the run together in the New Zealand bush, with the whole country looking for them."},
+  {t:"Crazy Rich Asians", y:2018, r:"2h", tags:["romance","comedy","light","cozy"], who:["partner","friends","solo"],
+   vibe:"Glossy, romantic, and pure escapist sparkle.",
+   peek:"A New York professor travels to Singapore with her boyfriend for a wedding, only to find out his family is wildly, jaw-droppingly rich."},
+  {t:"Before Sunrise", y:1995, r:"1h 41m", tags:["romance","wistful","thoughtful","nostalgic"], who:["partner","solo"],
+   vibe:"A late-night walk and talk that makes you want to fall in love with a city.",
+   peek:"Two strangers meet on a train in Europe and decide to spend one night wandering Vienna together, talking about everything."},
+  {t:"Spider-Man: Into the Spider-Verse", y:2018, r:"1h 57m", tags:["animated","action","wired","comedy","family"], who:["family","friends","solo"],
+   vibe:"A neon, comic-book burst of energy that looks like nothing else.",
+   peek:"Brooklyn teenager Miles Morales gets bitten by a radioactive spider and discovers he is not the only Spider-Person out there."},
+  {t:"Inception", y:2010, r:"2h 28m", tags:["sci-fi","thriller","intense","thoughtful","wired"], who:["friends","solo","partner"],
+   vibe:"A sleek, pulse-pounding puzzle box for when you want your brain fully switched on.",
+   peek:"A skilled thief who steals secrets from inside people’s dreams is offered one last job: instead of taking an idea, he has to plant one."},
+  {t:"Parasite", y:2019, r:"2h 12m", tags:["thriller","drama","tense","thoughtful"], who:["partner","friends","solo"],
+   vibe:"Darkly funny, razor-sharp, and impossible to stop thinking about.",
+   peek:"A struggling family cleverly works its way into jobs with a wealthy household, and things get more complicated than anyone planned."}
+];
+const POSTER_COLORS = ["#F5EFE6", "#E8B7A8", "#C9A7C0"];
+
+/* Words people type -> tags above */
+const SYN = {
+  tired:"cozy", sleepy:"cozy", cozy:"cozy", comfort:"cozy", warm:"cozy", chill:"cozy", relax:"cozy",
+  nostalg:"nostalgic", sad:"wistful", lonely:"wistful", miss:"wistful",
+  wired:"wired", energ:"wired", hype:"wired", excit:"wired",
+  funny:"comedy", laugh:"comedy", comedy:"comedy",
+  scary:"scary", horror:"scary", thrill:"thriller", action:"action",
+  romance:"romance", romantic:"romance", love:"romance",
+  sci:"sci-fi", space:"sci-fi", mystery:"mystery", animat:"animated", fantasy:"fantasy",
+  light:"light", dark:"intense", intense:"intense", heavy:"intense", tense:"tense", think:"thoughtful", deep:"thoughtful"
+};
+
+/* ---------- Text parsing helpers ---------- */
+const mins = r => { const h = r.match(/(\d+)h/), m = r.match(/(\d+)m/); return (h ? +h[1] * 60 : 0) + (m ? +m[1] : 0); };
+
+function tagsFrom(text){
+  const t = text.toLowerCase().replace(/\b(nothing|not too|no|not|never)\s+(too\s+)?heavy/g, "light");
+  const found = [];
+  for (const k in SYN) if (t.includes(k) && !found.includes(SYN[k])) found.push(SYN[k]);
+  return found;
+}
+function avoidTags(text){
+  const out = [], re = /\b(?:no|not|don'?t want|dont want|avoid|hate|without|sick of|but)\s+(?:any\s+|too\s+|more\s+)?(\w+)/g;
+  let m;
+  while ((m = re.exec(text.toLowerCase()))) for (const k in SYN) if (m[1].startsWith(k)) out.push(SYN[k]);
+  return out;
+}
+function whoFrom(t){
+  t = t.toLowerCase();
+  if (/family|kid|child|mom|dad|parents|sibling|brother|sister/.test(t)) return "family";
+  if (/partner|date|wife|husband|girlfriend|boyfriend|spouse|significant/.test(t)) return "partner";
+  if (/friend|buddies|roommate|group|the guys|the girls/.test(t)) return "friends";
+  if (/alone|solo|myself|just me/.test(t)) return "solo";
+  return null;
+}
+function maxMinutes(t){
+  t = t.toLowerCase();
+  const h = t.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/), m = t.match(/(\d+)\s*(?:minutes?|mins?|m)\b/);
+  if (h || m) return Math.round((h ? parseFloat(h[1]) * 60 : 0) + (m ? parseInt(m[1], 10) : 0));
+  if (/hour and a half/.test(t)) return 90;
+  if (/\bhour\b/.test(t)) return 60;
+  if (/quick|short/.test(t)) return 100;
+  return 999;
+}
+
+/* ---------- Recommendation logic ----------
+   Swap this function for a real backend call (an AI model turning the answers into
+   mood/genre/company/length/avoid signals, then TMDB for real titles).
+   It must return {picks:[{film, line}]} where line is the one-sentence vibe. */
+async function getPicks(a, mode){
+  const mg = (a.mood || "") + " " + (a.genre || "");
+  const extra = a.extra || "";
+  const who = whoFrom(a.who || "");
+  const limit = maxMinutes(a.time || "");
+  const avoid = avoidTags(mg + " " + extra);
+  const liked = FILMS.filter(f => extra.toLowerCase().includes(f.t.split(":")[0].toLowerCase()));
+  const surprise = mode === "surprise";
+
+  let want = tagsFrom(mg);
+  liked.forEach(f => f.tags.slice(0, 3).forEach(t => want.push(t)));
+  const exclude = [...avoid];
+  if (mode === "lighter") { want.push("light", "light"); exclude.push("intense", "tense", "scary"); }
+  if (who === "family") exclude.push("scary", "intense");
+  want = want.filter(t => !exclude.includes(t));
+
+  const base = FILMS.filter(f => !liked.includes(f));
+  const ok = (f, useLimit) => !f.tags.some(t => exclude.includes(t)) && (!useLimit || mins(f.r) <= limit + 10);
+  let pool = base.filter(f => ok(f, true));
+  if (pool.length < 3) pool = base.filter(f => ok(f, false));
+  if (pool.length < 3) pool = base;
+
+  const picks = pool.map(f => {
+    const hits = surprise ? 0 : f.tags.filter(t => want.includes(t)).length;
+    const whoHit = !!who && f.who.includes(who);
+    return {f, s: hits * 2 + (whoHit ? 1 : 0) + Math.random() * 0.6};
+  }).sort((x, y) => y.s - x.s).slice(0, 3).map(x => ({film: x.f, line: x.f.vibe}));
+
+  return {picks};
+}
+
+/* ---------- UI ---------- */
+const app = document.getElementById("app");
+const state = {step:"q", q:0, a:{}, nudged:false, busy:false, qText:`Hey ${USER_NAME}. ${QUESTIONS[0]}`, loadText:"", picks:[], detail:0};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tooShort = s => s.trim().length < 4 || /^(idk|good|fine|ok|okay|nothing|no|meh)$/i.test(s.trim());
+
+const MARK = `<div class="sammy"><div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 14c1.2 2 3 3 5 3s3.8-1 5-3"/><circle cx="9" cy="9.5" r="0.6"/><circle cx="15" cy="9.5" r="0.6"/></svg></div>Sammy</div>`;
+
+const words = text => text.split(" ").map((w, i) => `<span class="w" style="animation-delay:${i * 0.07}s">${esc(w)}</span>`).join(" ");
+const progress = n => `<div class="progress" aria-hidden="true">${STEPS.map((_, i) => `<i class="${i === n ? "on" : ""}"></i>`).join("")}</div>`;
+
+function render(){
+  if (state.step === "q") {
+    const delay = (state.qText.split(" ").length * 0.07 + 0.3).toFixed(2);
+    const ph = state.q === 0 && state.nudged ? "a few words is fine" : PLACEHOLDERS[state.q];
+    app.innerHTML = MARK + `
+      <div class="qwrap">
+        <h1 class="q serif">${words(state.qText)}</h1>
+        ${state.q === 0 && !state.nudged ? `<p class="sub rise" style="animation-delay:${delay}s">Type it however it comes out. There are no wrong answers.</p>` : ""}
+        <form class="input rise" id="f" style="animation-delay:${delay}s">
+          <label class="vh" for="a">${LABELS[state.q]}</label>
+          <textarea id="a" rows="2" placeholder="${ph}"></textarea>
+          <button class="send" aria-label="Send"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </form>
+      </div>` + progress(state.q);
+    const f = document.getElementById("f"), a = document.getElementById("a");
+    f.addEventListener("submit", e => { e.preventDefault(); const v = a.value.trim(); if (v) onAnswer(v); });
+    a.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); } });
+    a.focus({preventScroll:true});
+
+  } else if (state.step === "thinking") {
+    app.innerHTML = MARK + `
+      <div class="qwrap think">
+        <h1 class="q serif">${words(state.loadText)}</h1>
+        <p id="status" aria-live="polite"></p>
+        <div class="track" aria-hidden="true"><div class="bar"></div></div>
+      </div>`;
+
+  } else if (state.step === "reveal") {
+    const [h, ...alts] = state.picks;
+    app.innerHTML = MARK + `
+      <p class="serif rise" style="margin:0;font-size:26px;line-height:1.25">Tonight, start here.</p>
+      <button class="hero rise" data-i="0" style="animation-delay:.2s" aria-label="More about ${esc(h.film.t)}">
+        <div class="poster">${esc(h.film.t)}</div>
+        <div class="info">
+          <span class="tag">TOP PICK</span>
+          <span class="serif" style="font-size:22px">${esc(h.film.t)}</span>
+          <span class="meta">${h.film.y} · ${h.film.r}</span>
+          <span style="font-size:15px;line-height:1.4">${esc(h.line)}</span>
+        </div>
+      </button>
+      <div class="alts">${alts.map((p, i) => `
+        <button class="alt rise" data-i="${i + 1}" style="animation-delay:${0.5 + i * 0.2}s" aria-label="More about ${esc(p.film.t)}">
+          <div class="poster" style="background:${POSTER_COLORS[i + 1]}">${esc(p.film.t)}</div>
+          <div style="font-weight:500;font-size:15px">${esc(p.film.t)}</div>
+          <div class="meta">${p.film.y} · ${p.film.r}</div>
+          <div style="font-size:13px;line-height:1.4">${esc(p.line)}</div>
+        </button>`).join("")}</div>
+      <p class="hint rise" style="animation-delay:.9s">Tap any pick for the trailer, a sneak peek, and reviews.</p>
+      <div class="refine rise" style="animation-delay:1s">
+        <button id="lighter">Something lighter</button>
+        <button id="surprise">Surprise me</button>
+      </div>`;
+    app.querySelectorAll("[data-i]").forEach(b => b.onclick = () => openDetail(+b.dataset.i));
+    document.getElementById("lighter").onclick = () => think("lighter");
+    document.getElementById("surprise").onclick = () => think("surprise");
+
+  } else {
+    const p = state.picks[state.detail], f = p.film;
+    const enc = encodeURIComponent;
+    const trailer = "https://www.youtube.com/results?search_query=" + enc(f.t + " " + f.y + " official trailer");
+    const reviews = "https://letterboxd.com/search/films/" + enc(f.t + " " + f.y).replace(/%20/g, "+") + "/";
+    app.innerHTML = `
+      <button class="back" id="back">← Back to picks</button>
+      <div class="detail rise" style="display:flex;flex-direction:column;gap:22px">
+        <div class="poster big" style="background:${POSTER_COLORS[state.detail]}">${esc(f.t)}</div>
+        <div>
+          <h1 class="serif" style="margin:0 0 4px;font-size:32px;line-height:1.15">${esc(f.t)}</h1>
+          <span class="meta">${f.y} · ${f.r}</span>
+        </div>
+        <p class="serif" style="margin:0;font-size:20px;line-height:1.35">${esc(p.line)}</p>
+        <section>
+          <h2 class="label">SNEAK PEEK (NO SPOILERS)</h2>
+          <p class="body">${esc(f.peek)}</p>
+        </section>
+        <section>
+          <h2 class="label">TRAILER</h2>
+          ${f.trailerKey
+            ? `<iframe class="video" src="https://www.youtube-nocookie.com/embed/${esc(f.trailerKey)}" title="${esc(f.t)} trailer" allowfullscreen loading="lazy"></iframe>`
+            : `<a class="btn" href="${trailer}" target="_blank" rel="noopener noreferrer">▶ Watch the trailer ↗</a>`}
+        </section>
+        <section>
+          <h2 class="label">WHAT PEOPLE ARE SAYING</h2>
+          <a class="btn ghost" href="${reviews}" target="_blank" rel="noopener noreferrer">Read reviews on Letterboxd ↗</a>
+        </section>
+      </div>`;
+    document.getElementById("back").onclick = () => { state.step = "reveal"; show(); };
+  }
+}
+
+/* Fade the whole screen out, swap the content, fade back in */
+async function show(){
+  app.classList.add("out");
+  await sleep(500);
+  render();
+  app.scrollTop = 0;
+  app.classList.remove("out");
+}
+function openDetail(i){ state.detail = i; state.step = "detail"; show(); }
+
+async function onAnswer(text){
+  if (state.busy) return;
+  state.busy = true;
+  const key = STEPS[state.q];
+
+  if (key === "mood" && tooShort(text) && !state.nudged) {
+    state.nudged = true;
+    state.qText = "Okay, if today were a weather forecast, what would it be?";
+    await show();
+    state.busy = false;
+    return;
+  }
+  state.a[key] = text;
+  state.q++;
+  if (state.q >= STEPS.length) { state.busy = false; think(); return; }
+  state.qText = QUESTIONS[state.q];
+  await show();
+  state.busy = false;
+}
+
+async function think(mode){
+  if (state.busy) return;
+  state.busy = true;
+  const result = await getPicks(state.a, mode);
+  state.loadText = mode ? "Let me find something else for you" : "Finding the perfect pick for you";
+  state.step = "thinking";
+  await show();
+
+  const lines = mode
+    ? ["Taking another look...", "Setting a few new ones aside...", "Almost there..."]
+    : ["Browsing the shelves...", "Setting a few favorites aside...", "Almost there..."];
+  const el = document.getElementById("status");
+  for (const l of lines) {
+    el.style.opacity = 0; await sleep(250);
+    el.textContent = l; el.style.opacity = 1; await sleep(1500);
+  }
+  state.picks = result.picks;
+  state.step = "reveal";
+  await show();
+  state.busy = false;
+}
+
+render();
+</script>
+</body>
+</html>
